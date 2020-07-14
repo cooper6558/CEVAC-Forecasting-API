@@ -9,6 +9,7 @@ class Watt(Building):
     """
     Watt Building class
     """
+
     def __init__(self):
         """
         Provide Watt subdirectory within the model directory

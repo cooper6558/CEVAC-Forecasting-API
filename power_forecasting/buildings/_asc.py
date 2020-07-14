@@ -9,6 +9,7 @@ class ASC(Building):
     """
     ASC Building class
     """
+
     def __init__(self):
         """
         Provide ASC subdirectory within the model directory

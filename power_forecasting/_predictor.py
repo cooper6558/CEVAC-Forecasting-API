@@ -8,10 +8,12 @@ import pandas as pd
 from power_forecasting.architectures import Architecture
 from power_forecasting.buildings import Building
 
+
 class Predictor:
     """
     Predictor class that loads data and models, and provides forecast function.
     """
+
     def __init__(
             self,
             architecture: Architecture,
@@ -25,10 +27,10 @@ class Predictor:
 
     def forecast(
             self,
-            start_date: pd.Timestamp=None,
-            future_range: pd.Timedelta=None,
-            historical_data: pd.DataFrame=None,
-            future_data: pd.DataFrame=None
+            start_date: pd.Timestamp = None,
+            future_range: pd.Timedelta = None,
+            historical_data: pd.DataFrame = None,
+            future_data: pd.DataFrame = None
     ) -> pd.Series:
         """
         Forecast power consumption.
