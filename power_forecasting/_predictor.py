@@ -20,6 +20,11 @@ class Predictor:
             architecture: Type[Architecture],
             building: Type[Building]
     ):
+        """
+        Initiate a predictor object
+        :param architecture: desired model architecture
+        :param building: desired building for which to produce a forecast
+        """
         self.building: Building = building()
         self.architecture: Architecture = architecture(
             building_path=self.building.path,
