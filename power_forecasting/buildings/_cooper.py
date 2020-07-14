@@ -13,4 +13,5 @@ class Cooper(Building):
         """
         Provide Cooper subdirectory within the model directory
         """
-        super().__init__('Cooper')
+        self.building_name: str = "Cooper"
+        super().__init__()

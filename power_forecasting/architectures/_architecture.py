@@ -7,7 +7,6 @@ data.
 import pandas as pd
 from CEVAC.Connectors import SQLConnector
 
-
 __all__ = ["Architecture"]
 
 
@@ -15,15 +14,26 @@ class Architecture:
     """
     Base class for all architectures. Mainly serves to load data.
     """
-    def __init__(self, building_name: str):
+
+    def __init__(self, building_name: str, building_path: str):
         """
         Initiate an architecture object storing data required for forecasting
         :param building_name: specific building name;
             capitalization insensitive
+        :param building_path: path to the building's directory
         """
         self.data: pd.DataFrame
         self.date: pd.Timestamp
         self.data, self.date = load_all_data(building_name)
+        self.path: str = building_path
+
+    def predict(self, *args) -> pd.Series:
+        """
+        Prototype for predict function. This is never used; only overridden.
+        :return: empty time series
+        """
+        self.date = args
+        return pd.Series()
 
 
 def load_all_data(
@@ -72,8 +82,8 @@ def group_by_hour(data: pd.Series) -> pd.Series:
     data: pd.DataFrame = data.groupby(
         [data.index.date, data.index.hour]
     ).mean().reset_index()
-    data["level_0"] = pd.to_datetime(data["level_0"])
-    data["UTCDateTime"] = pd.to_timedelta(data["UTCDateTime"], unit="h")
+    data["level"] = pd.to_datetime(data["level_0"])
+    data["UTCDaTime"] = pd.to_timedelta(data["UTCDateTime"], unit="h")
     data["UTCDateTime"] += data["level_0"]
     return data.set_index("UTCDateTime")[name]
 
@@ -126,7 +136,7 @@ def get_weather_data(mm_id: int) -> pd.Series:
 
     rename = lambda table: table.rename(
         columns={
-            "value": "Cloud Coverage [%]" if mm_id==0 else "Temperature [C]"
+            "value": "Cloud Coverage [%]" if mm_id == 0 else "Temperature [C]"
         }
     )
 

@@ -13,4 +13,5 @@ class Watt(Building):
         """
         Provide Watt subdirectory within the model directory
         """
-        super().__init__('Watt')
+        self.building_name: str = "Watt"
+        super().__init__()
