@@ -9,4 +9,5 @@ class Prophet(Architecture):
     """
     Facebook Prophet Architecture class
     """
+
     pass

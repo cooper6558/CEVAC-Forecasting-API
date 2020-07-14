@@ -19,7 +19,7 @@ class Predictor:
             self,
             architecture: Type[Architecture],
             building: Type[Building]
-    ):
+    ) -> None:
         """
         Initiate a predictor object
         :param architecture: desired model architecture

@@ -10,7 +10,7 @@ class Watt(Building):
     Watt Building class
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Provide Watt subdirectory within the model directory
         """

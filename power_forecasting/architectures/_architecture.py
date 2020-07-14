@@ -7,15 +7,13 @@ data.
 import pandas as pd
 from CEVAC.Connectors import SQLConnector
 
-__all__ = ["Architecture"]
-
 
 class Architecture:
     """
     Base class for all architectures. Mainly serves to load data.
     """
 
-    def __init__(self, building_name: str, building_path: str):
+    def __init__(self, building_name: str, building_path: str) -> None:
         """
         Initiate an architecture object storing data required for forecasting
         :param building_name: specific building name;

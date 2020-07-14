@@ -14,6 +14,7 @@ few ways to do this. I refer you to
 """
 Example using the CEVAC Power Forecasting API.
 """
+
 from power_forecasting import Predictor
 from power_forecasting.buildings import Watt
 from power_forecasting.architectures import LSTM

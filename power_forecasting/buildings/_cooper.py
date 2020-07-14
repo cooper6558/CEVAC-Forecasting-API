@@ -10,7 +10,7 @@ class Cooper(Building):
     Cooper Building class
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Provide Cooper subdirectory within the model directory
         """

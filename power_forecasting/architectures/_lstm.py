@@ -9,4 +9,5 @@ class LSTM(Architecture):
     """
     LSTM Architecture class
     """
+
     pass

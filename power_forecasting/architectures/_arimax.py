@@ -9,4 +9,5 @@ class ARIMAX(Architecture):
     """
     ARIMAX Architecture class
     """
+
     pass
