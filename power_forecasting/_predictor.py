@@ -5,6 +5,7 @@ provides a forecast function.
 """
 
 import pandas as pd
+from typing import Type
 from power_forecasting.architectures import Architecture
 from power_forecasting.buildings import Building
 
@@ -16,13 +17,13 @@ class Predictor:
 
     def __init__(
             self,
-            architecture: Architecture,
-            building: Building
+            architecture: Type[Architecture],
+            building: Type[Building]
     ):
-        self.building: Building = building.__init__()
-        self.architecture: Architecture = architecture.__init__(
-            self.building.name,
-            self.building.path
+        self.building: Building = building()
+        self.architecture: Architecture = architecture(
+            building_path=self.building.path,
+            building_name=self.building.name
         )
 
     def forecast(

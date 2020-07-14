@@ -15,6 +15,5 @@ class Building:
         """
         Initiate a building object storing its model location
         """
-        self.building_name: str
-        self.name: str = self.building_name
-        self.path: str = PATH + self.building_name.lower()
+        self.name: str = str()
+        self.path: str = PATH

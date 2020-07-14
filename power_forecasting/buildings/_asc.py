@@ -14,5 +14,6 @@ class ASC(Building):
         """
         Provide ASC subdirectory within the model directory
         """
-        self.building_name: str = "ASC"
         super().__init__()
+        self.name: str = "ASC"
+        self.path += self.name
