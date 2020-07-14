@@ -31,6 +31,7 @@ class Predictor:
             building_name=self.building.name
         )
 
+    # TODO: argument = symbols are not separated by spaces
     def forecast(
             self,
             start_date: pd.Timestamp = None,
@@ -50,6 +51,24 @@ class Predictor:
         :param verbose: whether to print forecasting progress
         :return: time series of power consumption forecast
         """
+        # set defaults
+        start_date = (
+            self.architecture.date
+            if start_date is None else start_date
+        )
+        future_range = (
+            pd.to_timedelta(1, unit="D")
+            if future_range is None else future_range
+        )
+        historical_data = (
+            self.architecture.data[self.architecture.data.index <= start_date]
+            if historical_data is None else historical_data
+        )
+        future_data = (
+            self.architecture.data[self.architecture.data.index > start_date]
+            if future_data is None else future_data
+        )
+
         return self.architecture.predict(
             start_date,
             future_range,
