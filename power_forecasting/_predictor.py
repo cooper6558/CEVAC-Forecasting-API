@@ -36,7 +36,8 @@ class Predictor:
             start_date: pd.Timestamp = None,
             future_range: pd.Timedelta = None,
             historical_data: pd.DataFrame = None,
-            future_data: pd.DataFrame = None
+            future_data: pd.DataFrame = None,
+            verbose: bool = True
     ) -> pd.Series:
         """
         Forecast power consumption.
@@ -46,11 +47,13 @@ class Predictor:
             (overrides data fetched by Predictor() initialization)
         :param future_data: future (predicted) data for forecast
             (overrides data fetched by Predictor() initialization)
+        :param verbose: whether to print forecasting progress
         :return: time series of power consumption forecast
         """
         return self.architecture.predict(
             start_date,
             future_range,
             historical_data,
-            future_data
+            future_data,
+            verbose
         )
