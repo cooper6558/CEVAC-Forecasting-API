@@ -80,7 +80,7 @@ def group_by_hour(data: pd.Series) -> pd.Series:
     data: pd.DataFrame = data.groupby(
         [data.index.date, data.index.hour]
     ).mean().reset_index()
-    data["level"] = pd.to_datetime(data["level_0"])
+    data["level_0"] = pd.to_datetime(data["level_0"])
     data["UTCDaTime"] = pd.to_timedelta(data["UTCDateTime"], unit="h")
     data["UTCDateTime"] += data["level_0"]
     return data.set_index("UTCDateTime")[name]
@@ -136,7 +136,7 @@ def get_weather_data(mm_id: int) -> pd.Series:
         columns={
             "value": "Cloud Coverage [%]" if mm_id == 0 else "Temperature [C]"
         }
-    )
+    )["Cloud Coverage [%]" if mm_id == 0 else "Temperature [C]"]
 
     historical, forecast = rename(historical), rename(forecast)
 
@@ -155,7 +155,7 @@ def get_occupancy_data(
     :return: time series of occupancy data
     """
     query: str = "SELECT * FROM "
-    table: str = f"CEVAC_{building_name.upper()}_SPOWER_HIST"
+    table: str = f"CEVAC_{building_name.upper()}_WAP_FLOOR_SUMS_HIST"
     historical: pd.DataFrame = get_sql(query + table)
     current_date: pd.Timestamp = historical.index[-1]
     end_date: pd.Timestamp = current_date + future_range
