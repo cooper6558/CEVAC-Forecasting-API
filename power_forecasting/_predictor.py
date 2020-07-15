@@ -65,13 +65,14 @@ class Predictor:
             if historical_data is None else historical_data
         )
         future_data = (
-            self.architecture.data[self.architecture.data.index > start_date]
+            self.architecture.data[
+                start_date < self.architecture.data.index
+                <= start_date + future_range
+            ].drop(columns=["Power [kW]"])
             if future_data is None else future_data
         )
 
         return self.architecture.predict(
-            start_date,
-            future_range,
             historical_data,
             future_data,
             verbose
