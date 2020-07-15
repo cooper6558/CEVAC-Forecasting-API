@@ -16,4 +16,4 @@ class Watt(Building):
         """
         super().__init__()
         self.name: str = "Watt"
-        self.path += self.name
+        self.path += self.name.lower()

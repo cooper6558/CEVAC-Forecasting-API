@@ -81,7 +81,7 @@ def group_by_hour(data: pd.Series) -> pd.Series:
         [data.index.date, data.index.hour]
     ).mean().reset_index()
     data["level_0"] = pd.to_datetime(data["level_0"])
-    data["UTCDaTime"] = pd.to_timedelta(data["UTCDateTime"], unit="h")
+    data["UTCDateTime"] = pd.to_timedelta(data["UTCDateTime"], unit="h")
     data["UTCDateTime"] += data["level_0"]
     return data.set_index("UTCDateTime")[name]
 
