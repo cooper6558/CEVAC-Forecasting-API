@@ -187,5 +187,6 @@ def occupancy_forecast(
             end=end_date,
             freq="h",
             name="UTCDateTime"
-        )
+        ),
+        dtype="float64"
     )

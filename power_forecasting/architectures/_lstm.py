@@ -1,25 +1,20 @@
 """
 LSTM Architecture file
 """
+import os
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 from power_forecasting.architectures._architecture import Architecture
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 import pickle
 import pandas as pd
-import os
-from sklearn.utils.testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 import numpy as np
-
-# just trying to get TensorFlow to shut up
-tf.get_logger().setLevel("ERROR")
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-pd.set_option("mode.chained_assignment", None)
 
 DIFF_PERIODS: int = 7 * 24
 
@@ -46,7 +41,6 @@ class LSTM(Architecture):
         )
 
     # TODO: move this decorator to the impute function
-    @ignore_warnings(category=ConvergenceWarning)
     def predict(
             self,
             historical_data: pd.DataFrame,
