@@ -8,11 +8,12 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
-    name="power-forecasting",
+    name="CEVAC-Forecasting-API",
     version="1.0.0",
     author="Cooper Sanders",
     author_email="cssande@clemson.edu",
-    description="Power forecasting for CEVAC",
+    description="API for working with models "
+                "produced by the CEVAC research team.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
@@ -21,5 +22,7 @@ setuptools.setup(
         "tensorflow",
         "sklearn",
         "numpy",
+        "prophet",
+        "statsmodels"
     ],
 )
