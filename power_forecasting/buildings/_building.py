@@ -2,8 +2,8 @@
 Contains the Building base class. This locates the model files.
 """
 
-# TODO: find a way to input this path string
-PATH: str = "/home/cooper/research/models/"
+from occupancy_forecasting import buildings
+from typing import Type
 
 
 class Building:
@@ -15,5 +15,5 @@ class Building:
         """
         Initiate a building object storing its model location
         """
-        self.name: str = str()
-        self.path: str = PATH
+        self.name: str = "Building"
+        self.occupancy_building: Type[buildings.Building] = buildings.Building

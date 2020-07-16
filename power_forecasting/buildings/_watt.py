@@ -3,6 +3,7 @@ WFIC Building file
 """
 
 from power_forecasting.buildings._building import Building
+from occupancy_forecasting import buildings
 
 
 class Watt(Building):
@@ -15,5 +16,5 @@ class Watt(Building):
         Provide Watt subdirectory within the model directory
         """
         super().__init__()
-        self.name: str = "Watt"
-        self.path += self.name.lower()
+        self.name = "Watt"
+        self.occupancy_building = buildings.Watt
