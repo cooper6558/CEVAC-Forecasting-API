@@ -1,6 +1,6 @@
+"""LSTM Architecture file
 """
-LSTM Architecture file
-"""
+
 import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -16,6 +16,7 @@ from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 import numpy as np
 
+tf.get_logger().setLevel("ERROR")
 DIFF_PERIODS: int = 7 * 24
 
 
@@ -24,23 +25,22 @@ class LSTM(Architecture):
     LSTM Architecture class
     """
 
-    def __init__(self, building_name: str, building_path: str) -> None:
+    def __init__(self, building_name: str) -> None:
         """
         Initiate an LSTM architecture with model structure, parameters, & data
         :param building_name: specific building name;
             capitalization insensitive
-        :param building_path: path to the building's directory
         """
-        super().__init__(building_name, building_path)
+        super().__init__(building_name)
 
-        with open(f"{building_path}/LSTM/scale.pkl", "rb") as file:
+        with open(f"{self.path}/LSTM/scale.pkl", "rb") as file:
             self.scale: tuple = pickle.load(file)
 
         self.model: Sequential = tf.keras.models.load_model(
-            f"{building_path}/LSTM/model"
+            f"{self.path}/LSTM/model"
         )
 
-    # TODO: move this decorator to the impute function
+    # TODO: split this into smaller functions
     def predict(
             self,
             historical_data: pd.DataFrame,
@@ -49,73 +49,73 @@ class LSTM(Architecture):
     ) -> pd.Series:
         """
         Produce a dynamic forecast by recursively generating step forecasts.
+        === ASSUMPTIONS ==
+         - future_data is missing first column of historical_data;
+         - both indexes are DateTime
+         - data is hourly & consecutive, even across data frames
+            (although some values can be missing, the index must be continuous)
+         - column names should be the same between both data frames
         :param historical_data: historical data for forecast
         :param future_data: future (predicted) data for forecast
         :param verbose: whether to print forecasting progress
         :return: time series of power consumption forecast
         """
-        # reindex the data
-        historical_data = reindex(historical_data)
-        future_data = reindex(future_data)
 
         # check for missing data and fill it in
         if verbose:
             print("Filling missing data")
         historical_data = impute(historical_data)
         future_data = impute(future_data)
+        data = pd.concat([historical_data, future_data])
+
+
+        # difference data
+        # TODO: is copy() necessary?
+        if verbose:
+            print("Differencing data")
+        diff_base: pd.Series = historical_data.iloc[-DIFF_PERIODS:, 0].copy()
+        data = data.diff(DIFF_PERIODS)
+        data.dropna(inplace=True, how="all")
+
+        # historical_data = historical_data.diff(DIFF_PERIODS)
+        # future_data = future_data.diff(DIFF_PERIODS)
 
         # add fourier indicators
         if verbose:
             print("Adding datetime indicators")
-        historical_data["sin(day)"] = sin(historical_data.index.dayofyear, 365)
-        historical_data["cos(day)"] = cos(historical_data.index.dayofyear, 365)
-        historical_data["sin(hour)"] = sin(historical_data.index.hour, 24)
-        historical_data["cos(hour)"] = cos(historical_data.index.hour, 24)
-        future_data["sin(day)"] = sin(future_data.index.dayofyear, 365)
-        future_data["cos(day)"] = cos(future_data.index.dayofyear, 365)
-        future_data["sin(hour)"] = sin(future_data.index.hour, 24)
-        future_data["cos(hour)"] = cos(future_data.index.hour, 24)
+        data["sin(day)"] = sin(data.index.dayofyear, 365)
+        data["cos(day)"] = cos(data.index.dayofyear, 365)
+        data["sin(hour)"] = sin(data.index.hour, 24)
+        data["cos(hour)"] = cos(data.index.hour, 24)
+        # future_data["sin(day)"] = sin(future_data.index.dayofyear, 365)
+        # future_data["cos(day)"] = cos(future_data.index.dayofyear, 365)
+        # future_data["sin(hour)"] = sin(future_data.index.hour, 24)
+        # future_data["cos(hour)"] = cos(future_data.index.hour, 24)
 
         # add weekend indicators
-        # TODO: would this work without * 1?
-        historical_data["Weekend"] = (historical_data.index.dayofweek < 5) * 1
-        future_data["Weekend"] = (future_data.index.dayofweek < 5) * 1
-
-        # difference power column by one week (DIFF_PERIODS = 24 * 7 hours)
-        if verbose:
-            print("Differencing data")
-        diff_base: pd.DataFrame = historical_data.iloc[
-                                  -DIFF_PERIODS:, 0
-                                  ].copy()
-        diff_index: pd.DatetimeIndex = pd.date_range(
-            start=historical_data.index[-DIFF_PERIODS],
-            end=future_data.index[-1],
-            freq="h"
-        )
-        historical_data["Power [kW]"] = historical_data[
-            "Power [kW]"
-        ].diff(DIFF_PERIODS).dropna()
-
-        # store shape of data for the model
-        time_steps: int = historical_data.shape[0]
-        features: int = historical_data.shape[1]
+        data["Weekend"] = data.index.dayofweek < 5
+        # future_data["Weekend"] = future_data.index.dayofweek < 5
+        features: int = data.shape[1]
         future_range: int = future_data.shape[0]
+        time_steps: int = historical_data.shape[0] - DIFF_PERIODS
 
         # scale by mean and standard deviation
+        # TODO: does this work without iloc?
         if verbose:
             print("Scaling data")
-        historical_data.iloc[:, :] -= self.scale[0]
-        historical_data.iloc[:, :] /= self.scale[1]
-        future_data.iloc[:, :] -= self.scale[0][1:]
-        future_data.iloc[:, :] /= self.scale[1][1:]
+        data.iloc[:, :] -= self.scale[0]
+        data.iloc[:, :] /= self.scale[1]
+        # future_data.iloc[:, :] -= self.scale[0][1:]
+        # future_data.iloc[:, :] /= self.scale[1][1:]
 
         # here is the actual forecasting algorithm
-        x: np.ndarray = np.array(historical_data).reshape(
+        x: np.ndarray = data.iloc[:time_steps, :].to_numpy().reshape(
             (1, time_steps, features)
         )
-        steps: pd.DataFrame = pd.DataFrame(
+        # store predicted differences
+        steps: pd.Series = pd.Series(
             index=future_data.index,
-            columns={"Power [kW]", []}
+            dtype="float64"
         )
         digits: int = int(np.log10(future_range) + 1)
         for step in range(future_range):
@@ -124,44 +124,43 @@ class LSTM(Architecture):
                     for _ in range(17 + 2 * digits):
                         print("\b", end="")
                 print(
-                    f"Predicting step {step:{digits}}/{future_range - 1}",
+                    f"Predicting step {step + 1:{digits}}/{future_range}",
                     end=""
                 )
-            prediction: float = self.model.predict(x)
-            steps.iloc[step] = (
-                    prediction * self.scale[1][0] + self.scale[0][0]
-            )[0, 0]
+            prediction: float = self.model.predict(x).reshape(1)
+            steps[step] = prediction
+            # TODO: can this work without .values?
             new_row: np.ndarray = np.append(
-                prediction, future_data.iloc[step, :].values
+                prediction, data.iloc[step + time_steps, :].values
             )
             x = np.append(x, new_row).reshape(
                 (1, time_steps + 1, features)
             )[:, 1:, :]
 
+        # reverse scaling
+        if verbose:
+            print("\nReversing scaling")
+        steps *= self.scale[1][0]
+        steps += self.scale[0][0]
+
         # reverse differencing
-        # TODO: forecast can (probably) just be a series
         if verbose:
             print("\nReversing differencing")
-        forecast: pd.DataFrame = pd.DataFrame(
-            columns=["Power [kW]"],
-            index=diff_index
+        forecast: pd.Series = pd.Series(
+            name=data.columns[0],
+            index=data.index,
+            dtype="float64"
         )
-        forecast.iloc[:DIFF_PERIODS] = diff_base.to_numpy().reshape(
-            DIFF_PERIODS,
-            1
-        )
-        forecast.iloc[DIFF_PERIODS:] = steps.to_numpy().reshape(
-            future_range,
-            1
-        )
+        forecast.iloc[:DIFF_PERIODS] = diff_base
+        forecast.iloc[DIFF_PERIODS:] = steps
         for row in range(DIFF_PERIODS, DIFF_PERIODS + future_range):
             forecast.iloc[row] += forecast.iloc[row - DIFF_PERIODS]
         forecast = forecast[forecast.index >= future_data.index[0]]
-        forecast.index.name = future_data.index.name
 
-        return forecast["Power [kW]"]
+        return forecast
 
 
+# TODO: set n_neighbors based on how much missing data
 def impute(data: pd.DataFrame) -> pd.DataFrame:
     """
     Impute missing data.
@@ -175,7 +174,6 @@ def impute(data: pd.DataFrame) -> pd.DataFrame:
         lambda date: (date - base_date).days
     )
 
-    # TODO: would this work without iloc?
     data.iloc[:, :] = scaler.fit_transform(data)
 
     imputer: IterativeImputer = IterativeImputer(
@@ -194,21 +192,7 @@ def impute(data: pd.DataFrame) -> pd.DataFrame:
     return imputed_data.drop(columns=["Days"])
 
 
-def reindex(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Insert rows of missing data wherever index is inconsistent.
-    :param data: data frame with inconsistent index
-    :return: data frame with rows of missing data
-    """
-    index_name: str = data.index.name
-    index: pd.DatetimeIndex = pd.date_range(
-        data.index[0],
-        data.index[-1],
-        freq="h"
-    )
-    data = data.reindex(index)
-    data.index.rename(index_name, inplace=True)
-    return data
+# TODO: put this before impute for readability
 
 
 def sin(series: np.ndarray, offset: float) -> np.ndarray:
