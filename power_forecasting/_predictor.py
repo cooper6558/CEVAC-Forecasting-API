@@ -70,7 +70,7 @@ class Predictor:
             history_range = pd.Timedelta(weeks=2)
 
         if future_data is None:
-            future_data = data.copy()
+            future_data = data.drop(columns=["Power [kW]"]).copy()
         else:
             # TODO: is there a more "Pythonic" way to do this?
             for column in future_data:
@@ -105,8 +105,6 @@ class Predictor:
         future_data = future_data.mask(
             np.random.random(future_data.shape) < .2
         )
-        print(historical_data)
-        print(future_data)
         return self._architecture.predict(
             historical_data,
             future_data,

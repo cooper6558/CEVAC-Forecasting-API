@@ -19,7 +19,10 @@ class Architecture:
         :param building_name: specific building name;
             capitalization insensitive
         """
-        self.path: str = os.getenv("FORECAST_MODEL_DIR") + "/" + building_name
+        self.path: str = (
+                os.getenv("FORECAST_MODEL_DIR") + "/" +
+                building_name.lower()
+        )
 
     # TODO: fix these args
     def predict(self, *args) -> pd.Series:

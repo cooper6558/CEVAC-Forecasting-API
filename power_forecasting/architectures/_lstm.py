@@ -131,7 +131,7 @@ class LSTM(Architecture):
             steps[step] = prediction
             # TODO: can this work without .values?
             new_row: np.ndarray = np.append(
-                prediction, data.iloc[step + time_steps, :].values
+                prediction, data.iloc[step + time_steps, 1:].values
             )
             x = np.append(x, new_row).reshape(
                 (1, time_steps + 1, features)

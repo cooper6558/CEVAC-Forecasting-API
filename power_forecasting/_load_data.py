@@ -15,8 +15,8 @@ def load_future_data(
     :param future_range:
     :return:
     """
-    temperature: pd.Series = group_by_hour(future_weather_data(0))
-    clouds: pd.Series = group_by_hour(future_weather_data(6))
+    temperature: pd.Series = group_by_hour(future_weather_data(6))
+    clouds: pd.Series = group_by_hour(future_weather_data(0))
     occupancy: pd.Series = group_by_hour(future_occupancy_data(
         building,
         future_range
@@ -40,7 +40,7 @@ def future_weather_data(mm_id: int) -> pd.Series:
     data: pd.Series = get_sql(
         f"SELECT * FROM CEVAC_CAMPUS_WEATHER_FORECAST_DAY WHERE mm_id={mm_id}",
         "value",
-        "Cloud Coverage [%]" if mm_id == 0 else "Temperature [C]"
+        "Cloud Coverage [%]" if mm_id == 6 else "Temperature [C]"
     )
 
     return data
@@ -74,8 +74,8 @@ def load_historical_data(
     :return: compiled dataframe
     """
     power: pd.Series = group_by_hour(historical_power_data(building.name))
-    clouds: pd.Series = group_by_hour(historical_weather_data(0))
-    temperature: pd.Series = group_by_hour(historical_weather_data(6))
+    clouds: pd.Series = group_by_hour(historical_weather_data(6))
+    temperature: pd.Series = group_by_hour(historical_weather_data(0))
     occupancy: pd.Series = group_by_hour(
         historical_occupancy_data(building)
     )
@@ -145,7 +145,7 @@ def historical_weather_data(mm_id: int) -> pd.Series:
     data: pd.Series = get_sql(
         f"SELECT * FROM CEVAC_CAMPUS_WEATHER_HIST WHERE mm_id={mm_id}",
         "value",
-        "Cloud Coverage [%]" if mm_id == 0 else "Temperature [C]"
+        "Cloud Coverage [%]" if mm_id == 6 else "Temperature [C]"
     )
 
     return data
