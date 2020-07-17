@@ -38,7 +38,6 @@ class Predictor:
         )
 
     # TODO: argument = symbols are not separated by spaces
-    # args: start_date, future_range, history_range, future_data, verbose
     def forecast(
             self,
             start_date: pd.Timestamp = None,

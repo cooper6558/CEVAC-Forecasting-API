@@ -68,7 +68,6 @@ class LSTM(Architecture):
         future_data = impute(future_data)
         data = pd.concat([historical_data, future_data])
 
-
         # difference data
         # TODO: is copy() necessary?
         if verbose:
@@ -77,9 +76,6 @@ class LSTM(Architecture):
         data = data.diff(DIFF_PERIODS)
         data.dropna(inplace=True, how="all")
 
-        # historical_data = historical_data.diff(DIFF_PERIODS)
-        # future_data = future_data.diff(DIFF_PERIODS)
-
         # add fourier indicators
         if verbose:
             print("Adding datetime indicators")
@@ -87,14 +83,11 @@ class LSTM(Architecture):
         data["cos(day)"] = cos(data.index.dayofyear, 365)
         data["sin(hour)"] = sin(data.index.hour, 24)
         data["cos(hour)"] = cos(data.index.hour, 24)
-        # future_data["sin(day)"] = sin(future_data.index.dayofyear, 365)
-        # future_data["cos(day)"] = cos(future_data.index.dayofyear, 365)
-        # future_data["sin(hour)"] = sin(future_data.index.hour, 24)
-        # future_data["cos(hour)"] = cos(future_data.index.hour, 24)
 
         # add weekend indicators
+        # this is inverted; it should be >= 5, not < 5.
+        # I made the same mistake training the model, so it's actually correct.
         data["Weekend"] = data.index.dayofweek < 5
-        # future_data["Weekend"] = future_data.index.dayofweek < 5
         features: int = data.shape[1]
         future_range: int = future_data.shape[0]
         time_steps: int = historical_data.shape[0] - DIFF_PERIODS
@@ -105,8 +98,6 @@ class LSTM(Architecture):
             print("Scaling data")
         data.iloc[:, :] -= self.scale[0]
         data.iloc[:, :] /= self.scale[1]
-        # future_data.iloc[:, :] -= self.scale[0][1:]
-        # future_data.iloc[:, :] /= self.scale[1][1:]
 
         # here is the actual forecasting algorithm
         x: np.ndarray = data.iloc[:time_steps, :].to_numpy().reshape(
