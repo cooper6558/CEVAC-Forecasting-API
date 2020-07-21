@@ -151,7 +151,6 @@ class LSTM(Architecture):
         return forecast
 
 
-# TODO: set n_neighbors based on how much missing data
 def impute(data: pd.DataFrame) -> pd.DataFrame:
     """
     Impute missing data.
@@ -166,9 +165,9 @@ def impute(data: pd.DataFrame) -> pd.DataFrame:
     )
 
     data.iloc[:, :] = scaler.fit_transform(data)
-
-    imputer: IterativeImputer = IterativeImputer(
-        estimator=KNeighborsRegressor(n_neighbors=30),
+    n = np.min(data.count())
+    imputer = IterativeImputer(
+        estimator=KNeighborsRegressor(n_neighbors=n),
         max_iter=10,
         verbose=0
     )
