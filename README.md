@@ -1,6 +1,12 @@
 # Power Forecasting
-API for power forecasting models developed with CEVAC.
-
+API for power forecasting models developed with CEVAC. This API is really two
+packages distributed in one repository. The `occupancy_forecasting` package was
+developed by [Helena Upshaw](mailto:hupshaw@clemson.edu), and it provides an
+interface for pretrained models that forecast occupancy in different buildings
+across Clemson University. The `power_forecasting` package was developed by
+[Cooper Sanders](mailto:cssande@clemson.edu), and provides a similar interface
+for power consumption. This API aims to be quick and intuitive to use, while
+being future proof and easily extensible.
 ## Installation
 `pip install git+https://gitlab.clemson.edu/cevac/research/cevac-forecasting-api.git@master`  
 
