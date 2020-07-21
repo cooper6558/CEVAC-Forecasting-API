@@ -136,7 +136,7 @@ class LSTM(Architecture):
 
         # reverse differencing
         if verbose:
-            print("\nReversing differencing")
+            print("Reversing differencing")
         forecast: pd.Series = pd.Series(
             name=data.columns[0],
             index=data.index,
