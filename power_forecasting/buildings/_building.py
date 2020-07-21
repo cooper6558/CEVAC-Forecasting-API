@@ -16,4 +16,5 @@ class Building:
         Initiate a building object storing its model location
         """
         self.name: str = "Building"
+        # TODO: this will be default occupancy building, so make sure it exists
         self.occupancy_building: Type[buildings.Building] = buildings.Building

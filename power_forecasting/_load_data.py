@@ -4,89 +4,159 @@ from occupancy_forecasting import Predictor
 from power_forecasting.buildings import Building
 
 
-# TODO: get future range in here somehow
-def load_future_data(
+def load_all_data(
         building: Building,
-        future_range: pd.Timedelta
-) -> pd.DataFrame:
-    """Get forecast data
+        start_date: pd.Timestamp,
+        future_range: pd.Timedelta,
+        history_range: pd.Timedelta
+) -> (pd.DataFrame, pd.DataFrame):
+    if future_range is None:
+        future_range = pd.Timedelta(days=1)
 
-    :param building:
-    :param future_range:
-    :return:
-    """
-    temperature: pd.Series = group_by_hour(future_weather_data(6))
-    clouds: pd.Series = group_by_hour(future_weather_data(0))
-    occupancy: pd.Series = group_by_hour(future_occupancy_data(
-        building,
-        future_range
+    if history_range is None:
+        history_range = pd.Timedelta(weeks=2)
+
+    power_data: pd.Series = power(building)
+
+    if start_date is None:
+        start_date = power_data.index[-1] + pd.Timedelta(hours=1)
+
+    power_data = power_data.reindex(pd.date_range(
+        start_date - history_range,
+        start_date - pd.Timedelta(hours=1),
+        freq="h",
+        name=power_data.index.name
     ))
-    data: pd.DataFrame = pd.concat(
-        [temperature, clouds, occupancy],
-        axis=1
+
+    historical = load_regressors(
+        start_date - history_range,
+        start_date - pd.Timedelta(hours=1),
+        building
     )
-    data.name = building.name
-    data = reindex(data)
+    historical = pd.concat([power_data, historical], axis=1)
 
-    return data
-
-
-def future_weather_data(mm_id: int) -> pd.Series:
-    """Retrieve and format weather forecasts.
-
-    :param mm_id: 0 for cloud coverage, 6 for temperature
-    :return: time series of weather forecast
-    """
-    data: pd.Series = get_sql(
-        f"SELECT * FROM CEVAC_CAMPUS_WEATHER_FORECAST_DAY WHERE mm_id={mm_id}",
-        "value",
-        "Cloud Coverage [%]" if mm_id == 6 else "Temperature [C]"
+    future = load_regressors(
+        start_date,
+        start_date + future_range - pd.Timedelta(hours=1),
+        building
     )
 
-    return data
+    return historical, future
 
 
-# TODO: integrate this with Helena's model
-def future_occupancy_data(
-        building: Building,
-        future_range: pd.Timedelta
-) -> pd.Series:
-    """Retrieve and format occupancy forecasts from Helena's model.
-
-    :param building:
-    :param future_range:
-    :return:
-    """
-    predictor: Predictor = Predictor(
-        building=building.occupancy_building
-    )
-    return predictor.forecast(future_range)
-
-
-def load_historical_data(
+def load_regressors(
+        start_date: pd.Timestamp,
+        end_date: pd.Timestamp,
         building: Building
 ) -> pd.DataFrame:
+    """Load variables in given range, stored as DateTime indexed DataFrame.
+    Current variables include:
+        - Temperature [C]
+        - Cloud Coverage [%]
+        - Occupancy
+
+    :param start_date:
+    :param end_date:
+    :param building_name:
+    :return:
     """
-    Read from SQL Server, and compile everything into one dataframe.
-    :param building: specific building name;
-        capitalization insensitive
-    :param future_range:
-    :return: compiled dataframe
-    """
-    power: pd.Series = group_by_hour(historical_power_data(building.name))
-    clouds: pd.Series = group_by_hour(historical_weather_data(6))
-    temperature: pd.Series = group_by_hour(historical_weather_data(0))
-    occupancy: pd.Series = group_by_hour(
-        historical_occupancy_data(building)
-    )
-    data: pd.DataFrame = pd.concat(
-        [power, temperature, clouds, occupancy],
+    return pd.concat(
+        objs=[
+            temperature(start_date, end_date),
+            clouds(start_date, end_date),
+            occupancy(start_date, end_date, building),
+        ],
         axis=1
     )
-    data.name = building.name
-    data = reindex(data)
 
-    return data
+
+def power(building: Building) -> pd.Series:
+    query = "SELECT * FROM "
+    table = f"CEVAC_{building.name.upper()}_SPOWER_HIST"
+    power_data = group_by_hour(get_sql(query + table, "Value", "Power [kW]"))
+
+    return power_data
+
+
+def temperature(
+        start_date: pd.Timestamp,
+        end_date: pd.Timestamp
+) -> pd.Series:
+    return weather(
+        start_date,
+        end_date,
+        "Temperature [C]",
+        0
+    )
+
+
+def clouds(
+        start_date: pd.Timestamp,
+        end_date: pd.Timestamp
+) -> pd.Series:
+    return weather(
+        start_date,
+        end_date,
+        "Cloud Coverage [%]",
+        6
+    )
+
+
+def occupancy(
+        start_date: pd.Timestamp,
+        end_date: pd.Timestamp,
+        building: Building
+) -> pd.Series:
+    query = "SELECT * FROM "
+    table = f"CEVAC_{building.name.upper()}_WAP_FLOOR_SUMS_HIST"
+    historical = get_sql(
+        query + table,
+        "SUM_clemson_count",
+        "Occupancy"
+    )
+
+    predictor = Predictor(
+        building=building.occupancy_building
+    )
+    # TODO: integrate with Helena's model
+    future = predictor.forecast(start_date, end_date)
+
+    occupancy_data = pd.concat([historical, future])
+    occupancy_data = group_by_hour(occupancy_data)
+    occupancy_data = occupancy_data.reindex(pd.date_range(
+        start_date,
+        end_date,
+        freq="h",
+        name=occupancy_data.index.name
+    ))
+    return occupancy_data
+
+
+def weather(
+        start_date: pd.Timestamp,
+        end_date: pd.Timestamp,
+        name: str,
+        mm_id: int
+) -> pd.Series:
+    historical = get_sql(
+        f"SELECT * FROM CEVAC_CAMPUS_WEATHER_HIST WHERE mm_id={mm_id}",
+        "value",
+        name
+    )
+    future = get_sql(
+        f"SELECT * FROM CEVAC_CAMPUS_WEATHER_FORECAST_DAY WHERE mm_id={mm_id}",
+        "value",
+        name
+    )
+    weather_data = pd.concat([historical, future])
+    weather_data = group_by_hour(weather_data)
+    weather_data = weather_data.reindex(pd.date_range(
+        start=start_date,
+        end=end_date,
+        freq="h",
+        name=weather_data.index.name
+    ))
+    return weather_data
 
 
 def group_by_hour(data: pd.Series) -> pd.Series:
@@ -122,64 +192,3 @@ def get_sql(query: str, column: str, rename: str) -> pd.Series:
     data.set_index("UTCDateTime", inplace=True)
     data.rename(columns={column: rename}, inplace=True)
     return data[rename]
-
-
-def historical_power_data(building_name: str) -> pd.Series:
-    """
-    Retrieve and format power usage data.
-    :param building_name: specific building name;
-        capitalization insensitive
-    :return: time series of power consumption
-    """
-    query: str = "SELECT * FROM "
-    table: str = f"CEVAC_{building_name.upper()}_SPOWER_HIST"
-    return get_sql(query + table, "Value", "Power [kW]")
-
-
-def historical_weather_data(mm_id: int) -> pd.Series:
-    """
-    Retrieve and format weather data.
-    :param mm_id: 0 for cloud coverage, 6 for temperature
-    :return: time series of weather data
-    """
-    data: pd.Series = get_sql(
-        f"SELECT * FROM CEVAC_CAMPUS_WEATHER_HIST WHERE mm_id={mm_id}",
-        "value",
-        "Cloud Coverage [%]" if mm_id == 6 else "Temperature [C]"
-    )
-
-    return data
-
-
-# TODO: fix this and other docstrings
-def historical_occupancy_data(building: Building) -> pd.Series:
-    """
-    Retrieve and format occupancy data.
-    :param building: specific building name;
-        capitalization insensitive
-    :return: time series of occupancy data
-    """
-    query: str = "SELECT * FROM "
-    table: str = f"CEVAC_{building.name.upper()}_WAP_FLOOR_SUMS_HIST"
-    data: pd.Series = get_sql(
-        query + table,
-        "SUM_clemson_count",
-        "Occupancy"
-    )
-    return data
-
-
-def reindex(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Insert rows of missing data wherever index is inconsistent.
-    :param data: data frame with inconsistent index
-    :return: data frame with rows of missing data
-    """
-    data = data.reindex(pd.date_range(
-        data.index[0],
-        data.index[-1],
-        freq="h",
-        name=data.index.name
-    ))
-
-    return data
