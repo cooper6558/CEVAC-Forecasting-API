@@ -21,8 +21,5 @@ setuptools.setup(
         "pandas",
         "tensorflow",
         "sklearn",
-        "numpy",
-        "prophet",
-        "statsmodels"
     ],
 )

@@ -2,7 +2,7 @@
 API for power forecasting models developed with CEVAC.
 
 ## Installation
-`pip install git+https://git@gitlab.clemson.edu/cssande/forecast-draft`  
+`pip install git+https://gitlab.clemson.edu/cevac/research/cevac-forecasting-api.git@master`  
 
 This package requires
 [CEVAC Python](https://gitlab.clemson.edu/cevac/CEVAC_python), and there are a
@@ -42,7 +42,7 @@ you want to use a config file, `Hostname` is `gitlab.clemson.edu`, and `User`
 is `git`. Your identity is determined by the key file you provide. In the
 installation command, replace `git@gitlab.clemson.edu` with the value you set
 for `Host`, i.e.  
-`pip install git+ssh://[host]/cssande/forecast-draft`  
+`pip install git+ssh://[Host]/cevac/research/cevac-forecasting-api.git@master`  
 
 Finally, you may simply `git clone` the whole thing, and install from there. Do
 this if there is some obscure modification you need to make to the API. If
