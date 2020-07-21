@@ -20,8 +20,9 @@ class Architecture:
             capitalization insensitive
         """
         self.path: str = (
-                os.getenv("FORECAST_MODEL_DIR") + "/" +
-                building_name.lower()
+                os.getenv("FORECAST_MODEL_DIR")
+                + building_name.lower()
+                + "/"
         )
 
     # TODO: fix these args

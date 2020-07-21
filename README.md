@@ -10,6 +10,12 @@ few ways to do this. I refer you to
 [Bennett Meares](mailto:bmeares@clemson.edu) for more information.
 
 ## Usage
+### `power_forecasting`
+```shell script
+$ pwd
+>>> ~/
+$ git clone https://gitlab.clemson.edu/cevac/research/cevac-forecasting-models
+```
 ```python
 """
 Example using the CEVAC Power Forecasting API.
@@ -19,6 +25,9 @@ from power_forecasting import Predictor
 from power_forecasting.buildings import Watt
 from power_forecasting.architectures import LSTM
 import pandas as pd
+import os
+
+os.environ["FORECAST_MODEL_DIR"] = "~/cevac-forecasting-models/"
 
 predictor = Predictor(
     building=Watt,

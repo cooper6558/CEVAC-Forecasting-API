@@ -33,11 +33,11 @@ class LSTM(Architecture):
         """
         super().__init__(building_name)
 
-        with open(f"{self.path}/LSTM/scale.pkl", "rb") as file:
-            self.scale: tuple = pickle.load(file)
+        with open(f"{self.path}lstm/scale.pkl", "rb") as file:
+            self.scale = pickle.load(file)
 
-        self.model: Sequential = tf.keras.models.load_model(
-            f"{self.path}/LSTM/model"
+        self.model = tf.keras.models.load_model(
+            f"{self.path}lstm/model"
         )
 
     # TODO: split this into smaller functions
